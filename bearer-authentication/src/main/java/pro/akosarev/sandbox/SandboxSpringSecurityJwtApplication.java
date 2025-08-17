@@ -34,7 +34,7 @@ public class SandboxSpringSecurityJwtApplication {
             @Value("${jwt.refresh-token-key}") String refreshTokenKey,
             JdbcTemplate jdbcTemplate
     ) throws ParseException, JOSEException {
-        return new JwtAuthenticationConfigurer()
+        return JwtAuthenticationConfigurer.builder()
                 .accessTokenStringSerializer(new AccessTokenJwsStringSerializer(
                         new MACSigner(OctetSequenceKey.parse(accessTokenKey))
                 ))
@@ -47,12 +47,14 @@ public class SandboxSpringSecurityJwtApplication {
                 .refreshTokenStringDeserializer(new RefreshTokenJweStringDeserializer(
                         new DirectDecrypter(OctetSequenceKey.parse(refreshTokenKey))
                 ))
-                .jdbcTemplate(jdbcTemplate);
+                .jdbcTemplate(jdbcTemplate)
+        .build();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationConfigurer jwtAuthenticationConfigurer) throws Exception {
+                                                   JwtAuthenticationConfigurer jwtAuthenticationConfigurer
+    ) throws Exception {
         http.apply(jwtAuthenticationConfigurer);
 
         return http

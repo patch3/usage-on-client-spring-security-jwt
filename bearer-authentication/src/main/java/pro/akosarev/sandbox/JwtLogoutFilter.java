@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Setter;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,16 +20,24 @@ import java.io.IOException;
 import java.util.Date;
 
 public class JwtLogoutFilter extends OncePerRequestFilter {
-
+    @Setter
     private RequestMatcher requestMatcher = new AntPathRequestMatcher("/jwt/logout", HttpMethod.POST.name());
 
+    @Setter
     private SecurityContextRepository securityContextRepository = new RequestAttributeSecurityContextRepository();
 
     private final JdbcTemplate jdbcTemplate;
 
+    public JwtLogoutFilter(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain
+    ) throws ServletException, IOException {
         if (this.requestMatcher.matches(request)) {
             if (this.securityContextRepository.containsContext(request)) {
                 var context = this.securityContextRepository.loadDeferredContext(request).get();
@@ -38,27 +47,12 @@ public class JwtLogoutFilter extends OncePerRequestFilter {
                                 .contains(new SimpleGrantedAuthority("JWT_LOGOUT"))) {
                     this.jdbcTemplate.update("insert into t_deactivated_token (id, c_keep_until) values (?, ?)",
                             user.getToken().id(), Date.from(user.getToken().expiresAt()));
-
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     return;
                 }
             }
-
             throw new AccessDeniedException("User must be authenticated with JWT");
         }
-
         filterChain.doFilter(request, response);
-    }
-
-    public JwtLogoutFilter(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public void setRequestMatcher(RequestMatcher requestMatcher) {
-        this.requestMatcher = requestMatcher;
-    }
-
-    public void setSecurityContextRepository(SecurityContextRepository securityContextRepository) {
-        this.securityContextRepository = securityContextRepository;
     }
 }

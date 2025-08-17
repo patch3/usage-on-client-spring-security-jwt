@@ -1,18 +1,15 @@
 package pro.akosarev.sandbox;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.text.ParseException;
 import java.util.UUID;
 import java.util.function.Function;
 
 public class AccessTokenJwsStringDeserializer implements Function<String, Token> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessTokenJwsStringDeserializer.class);
 
     private final JWSVerifier jwsVerifier;

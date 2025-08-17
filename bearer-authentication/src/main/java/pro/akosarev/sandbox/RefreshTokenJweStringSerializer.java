@@ -3,21 +3,21 @@ package pro.akosarev.sandbox;
 import com.nimbusds.jose.*;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.Date;
 import java.util.function.Function;
 
 public class RefreshTokenJweStringSerializer implements Function<Token, String> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RefreshTokenJweStringSerializer.class);
 
     private final JWEEncrypter jweEncrypter;
 
+    @Setter
     private JWEAlgorithm jweAlgorithm = JWEAlgorithm.DIR;
 
+    @Setter
     private EncryptionMethod encryptionMethod = EncryptionMethod.A128GCM;
 
     public RefreshTokenJweStringSerializer(JWEEncrypter jweEncrypter) {
@@ -50,15 +50,6 @@ public class RefreshTokenJweStringSerializer implements Function<Token, String> 
         } catch (JOSEException exception) {
             LOGGER.error(exception.getMessage(), exception);
         }
-
         return null;
-    }
-
-    public void setJweAlgorithm(JWEAlgorithm jweAlgorithm) {
-        this.jweAlgorithm = jweAlgorithm;
-    }
-
-    public void setEncryptionMethod(EncryptionMethod encryptionMethod) {
-        this.encryptionMethod = encryptionMethod;
     }
 }

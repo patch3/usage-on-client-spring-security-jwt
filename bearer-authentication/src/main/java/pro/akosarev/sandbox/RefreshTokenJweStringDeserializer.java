@@ -1,19 +1,15 @@
 package pro.akosarev.sandbox;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEAlgorithm;
 import com.nimbusds.jose.JWEDecrypter;
 import com.nimbusds.jwt.EncryptedJWT;
-import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.text.ParseException;
 import java.util.UUID;
 import java.util.function.Function;
 
 public class RefreshTokenJweStringDeserializer implements Function<String, Token> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RefreshTokenJweStringDeserializer.class);
 
     private final JWEDecrypter jweDecrypter;
@@ -35,7 +31,6 @@ public class RefreshTokenJweStringDeserializer implements Function<String, Token
         } catch (ParseException | JOSEException exception) {
             LOGGER.error(exception.getMessage(), exception);
         }
-
         return null;
     }
 }

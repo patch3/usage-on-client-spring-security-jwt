@@ -6,27 +6,25 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.AllArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.function.Function;
 
+@AllArgsConstructor
 public class AccessTokenJwsStringSerializer implements Function<Token, String> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AccessTokenJwsStringSerializer.class);
 
     private final JWSSigner jwsSigner;
 
+    @Setter
     private JWSAlgorithm jwsAlgorithm = JWSAlgorithm.HS256;
 
     public AccessTokenJwsStringSerializer(JWSSigner jwsSigner) {
         this.jwsSigner = jwsSigner;
-    }
-
-    public AccessTokenJwsStringSerializer(JWSSigner jwsSigner, JWSAlgorithm jwsAlgorithm) {
-        this.jwsSigner = jwsSigner;
-        this.jwsAlgorithm = jwsAlgorithm;
     }
 
     @Override
@@ -49,11 +47,6 @@ public class AccessTokenJwsStringSerializer implements Function<Token, String> {
         } catch (JOSEException exception) {
             LOGGER.error(exception.getMessage(), exception);
         }
-
         return null;
-    }
-
-    public void setJwsAlgorithm(JWSAlgorithm jwsAlgorithm) {
-        this.jwsAlgorithm = jwsAlgorithm;
     }
 }

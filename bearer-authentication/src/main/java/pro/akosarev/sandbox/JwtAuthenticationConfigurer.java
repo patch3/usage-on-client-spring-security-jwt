@@ -1,6 +1,8 @@
 package pro.akosarev.sandbox;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Builder;
+import lombok.Setter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,9 +16,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.function.Function;
 
+@Setter
+@Builder
 public class JwtAuthenticationConfigurer
         extends AbstractHttpConfigurer<JwtAuthenticationConfigurer, HttpSecurity> {
-
     private Function<Token, String> refreshTokenStringSerializer = Object::toString;
 
     private Function<Token, String> accessTokenStringSerializer = Object::toString;
@@ -62,34 +65,5 @@ public class JwtAuthenticationConfigurer
                 .addFilterAfter(refreshTokenFilter, ExceptionTranslationFilter.class)
                 .addFilterAfter(jwtLogoutFilter, ExceptionTranslationFilter.class)
                 .authenticationProvider(authenticationProvider);
-    }
-
-    public JwtAuthenticationConfigurer refreshTokenStringSerializer(
-            Function<Token, String> refreshTokenStringSerializer) {
-        this.refreshTokenStringSerializer = refreshTokenStringSerializer;
-        return this;
-    }
-
-    public JwtAuthenticationConfigurer accessTokenStringSerializer(
-            Function<Token, String> accessTokenStringSerializer) {
-        this.accessTokenStringSerializer = accessTokenStringSerializer;
-        return this;
-    }
-
-    public JwtAuthenticationConfigurer accessTokenStringDeserializer(
-            Function<String, Token> accessTokenStringDeserializer) {
-        this.accessTokenStringDeserializer = accessTokenStringDeserializer;
-        return this;
-    }
-
-    public JwtAuthenticationConfigurer refreshTokenStringDeserializer(
-            Function<String, Token> refreshTokenStringDeserializer) {
-        this.refreshTokenStringDeserializer = refreshTokenStringDeserializer;
-        return this;
-    }
-
-    public JwtAuthenticationConfigurer jdbcTemplate(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-        return this;
     }
 }

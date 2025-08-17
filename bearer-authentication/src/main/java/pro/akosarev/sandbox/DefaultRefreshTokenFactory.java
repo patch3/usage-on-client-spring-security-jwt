@@ -1,16 +1,16 @@
 package pro.akosarev.sandbox;
 
+import lombok.Setter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.function.Function;
 
+@Setter
 public class DefaultRefreshTokenFactory implements Function<Authentication, Token> {
-
     private Duration tokenTtl = Duration.ofDays(1);
 
     @Override
@@ -26,9 +26,5 @@ public class DefaultRefreshTokenFactory implements Function<Authentication, Toke
 
         var now = Instant.now();
         return new Token(UUID.randomUUID(), authentication.getName(), authorities, now, now.plus(this.tokenTtl));
-    }
-
-    public void setTokenTtl(Duration tokenTtl) {
-        this.tokenTtl = tokenTtl;
     }
 }

@@ -1,6 +1,7 @@
 package pro.akosarev.sandbox;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationConverter;
@@ -8,17 +9,11 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 
 import java.util.function.Function;
 
+@AllArgsConstructor
 public class JwtAuthenticationConverter implements AuthenticationConverter {
-
     private final Function<String, Token> accessTokenStringDeserializer;
 
     private final Function<String, Token> refreshTokenStringDeserializer;
-
-    public JwtAuthenticationConverter(Function<String, Token> accessTokenStringDeserializer,
-                                      Function<String, Token> refreshTokenStringDeserializer) {
-        this.accessTokenStringDeserializer = accessTokenStringDeserializer;
-        this.refreshTokenStringDeserializer = refreshTokenStringDeserializer;
-    }
 
     @Override
     public Authentication convert(HttpServletRequest request) {
@@ -35,7 +30,6 @@ public class JwtAuthenticationConverter implements AuthenticationConverter {
                 return new PreAuthenticatedAuthenticationToken(refreshToken, token);
             }
         }
-
         return null;
     }
 }

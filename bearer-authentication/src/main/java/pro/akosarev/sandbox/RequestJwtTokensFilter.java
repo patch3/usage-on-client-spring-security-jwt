@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Setter;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,8 +20,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.function.Function;
 
+@Setter
 public class RequestJwtTokensFilter extends OncePerRequestFilter {
-
     private RequestMatcher requestMatcher = new AntPathRequestMatcher("/jwt/tokens", HttpMethod.POST.name());
 
     private SecurityContextRepository securityContextRepository = new RequestAttributeSecurityContextRepository();
@@ -62,31 +63,4 @@ public class RequestJwtTokensFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    public void setRequestMatcher(RequestMatcher requestMatcher) {
-        this.requestMatcher = requestMatcher;
-    }
-
-    public void setSecurityContextRepository(SecurityContextRepository securityContextRepository) {
-        this.securityContextRepository = securityContextRepository;
-    }
-
-    public void setRefreshTokenFactory(Function<Authentication, Token> refreshTokenFactory) {
-        this.refreshTokenFactory = refreshTokenFactory;
-    }
-
-    public void setAccessTokenFactory(Function<Token, Token> accessTokenFactory) {
-        this.accessTokenFactory = accessTokenFactory;
-    }
-
-    public void setRefreshTokenStringSerializer(Function<Token, String> refreshTokenStringSerializer) {
-        this.refreshTokenStringSerializer = refreshTokenStringSerializer;
-    }
-
-    public void setAccessTokenStringSerializer(Function<Token, String> accessTokenStringSerializer) {
-        this.accessTokenStringSerializer = accessTokenStringSerializer;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 }
