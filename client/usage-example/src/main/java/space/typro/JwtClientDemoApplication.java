@@ -60,17 +60,18 @@ public class JwtClientDemoApplication {
         }
     }
 
+    private static final int MAX_REFRESH_ATTEMPTS = 3;
+    private int refreshAttempts = 0;
+
     private void run() {
         while (true) {
             System.out.println("\n--- JWT Client Demo Menu ---");
             System.out.println("1. Login");
             if (currentAccessToken != null) {
                 System.out.println("2. Access Protected Resource (using current Access Token)");
-                // TODO
             }
             if (currentRefreshToken != null) {
                 System.out.println("3. Refresh Access Token (using current Refresh Token)");
-                // TODO
             }
             System.out.println("4. Exit");
             System.out.print("Choose an option: ");
@@ -81,15 +82,18 @@ public class JwtClientDemoApplication {
                 case "1": // 1. Login
                     performLogin();
                     break;
-                case "2":
-                    if (currentAccessToken != null) {
+                case "2": // 2. Access Protected Resource (using current Access Token)
+                    if (isTokenValid(currentAccessToken)) {
                         accessProtectedResource();
                     } else {
-                        System.out.println("You need to log in first");
-                        //TODO
+                        System.out.println("You need to log in first or token is expired");
+                        if (currentRefreshToken != null) {
+                            System.out.println("Attempting to refresh token...");
+                            refreshAccessToken();
+                        }
                     }
                     break;
-                case "3":
+                case "3": // 3. Refresh Access Token (using current Refresh Token)
                     if (currentRefreshToken != null) {
                         refreshAccessToken();
                     } else {
@@ -97,7 +101,7 @@ public class JwtClientDemoApplication {
                         //TODO
                     }
                     break;
-                case "4":
+                case "4": // 4. Exit
                     System.out.println("Exiting...");
                     return;
                 default:
@@ -106,6 +110,113 @@ public class JwtClientDemoApplication {
         }
     }
 
+    private void accessProtectedResource() {
+        System.out.println("Accessing protected resource...");
+        Optional<String> resourceResponse = httpClientService.getWithBearerToken(
+                URI.create(serverConfig.getFullProtectedResourceUrl()), currentAccessToken);
+
+        // Если запрос не удался, пробуем обновить токен
+        if (resourceResponse.isEmpty() && currentRefreshToken != null) {
+            System.out.println("Access token might be expired. Attempting to refresh...");
+            refreshAccessToken();
+            // Повторяем запрос после обновления токена
+            if (currentAccessToken != null) {
+                resourceResponse = httpClientService.getWithBearerToken(
+                        URI.create(serverConfig.getFullProtectedResourceUrl()), currentAccessToken);
+            }
+        }
+
+        resourceResponse.ifPresentOrElse(
+                response -> {
+                    System.out.println("Successfully accessed protected resource!");
+                    System.out.println("Response: " + response);
+                },
+                () -> {
+                    if (currentRefreshToken == null) {
+                        System.out.println("Failed to access protected resource. No refresh token available.");
+                    } else {
+                        System.out.println("Failed to access protected resource even after token refresh.");
+                    }
+                }
+        );
+    }
+
+    // Метод для очистки токенов
+    private void clearTokens() {
+        this.currentAccessToken = null;
+        this.currentRefreshToken = null;
+        this.refreshAttempts = 0;
+        System.out.println("Tokens cleared. Please login again.");
+    }
+
+    private void refreshAccessToken() {
+        System.out.println("Refreshing Access Token...");
+
+        try {
+            Optional<String> refreshResponse = httpClientService.postWithBearerToken(
+                    URI.create(serverConfig.getFullRefreshUrl()), "{}", currentRefreshToken);
+
+            if (refreshResponse.isPresent()) {
+                Optional<Tokens> newTokensOpt = jwtTokenHandler.extractTokensFromResponse(refreshResponse.get());
+
+                if (newTokensOpt.isPresent()) {
+                    Tokens newTokens = newTokensOpt.get();
+                    this.currentAccessToken = newTokens.accessToken();
+
+                    // Обновляем refresh token, если сервер вернул новый
+                    if (newTokens.refreshToken() != null) {
+                        this.currentRefreshToken = newTokens.refreshToken();
+                        System.out.println("Access AND Refresh Tokens refreshed successfully!");
+                    } else {
+                        System.out.println("Access Token refreshed successfully!");
+                    }
+
+                    // Сбрасываем счетчик попыток при успешном обновлении
+                    refreshAttempts = 0;
+                } else {
+                    // Ошибка парсинга ответа сервера
+                    System.out.println("Failed to parse new tokens from refresh response. Server returned invalid format.");
+                    log.warn("Refresh response parsing failed. Response: {}", refreshResponse.get());
+
+                    // Увеличиваем счетчик неудачных попыток
+                    refreshAttempts++;
+
+                    // Если несколько попыток подряд неудачны, считаем ошибку постоянной
+                    if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+                        System.out.println("Multiple refresh attempts failed due to server response format issues. Please login again.");
+                        clearTokens();
+                    }
+                }
+            } else {
+                // Сетевая ошибка или сервер не ответил
+                System.out.println("Failed to refresh Access Token. Network or server error.");
+
+                // Увеличиваем счетчик неудачных попыток
+                refreshAttempts++;
+
+                // Если несколько попыток подряд неудачны, считаем ошибку постоянной
+                if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+                    System.out.println("Multiple refresh attempts failed due to network issues. Please check your connection and try again.");
+                    clearTokens();
+                }
+            }
+        } catch (Exception e) {
+            // Непредвиденная ошибка
+            System.out.println("Unexpected error during token refresh: " + e.getMessage());
+            log.error("Unexpected error during token refresh", e);
+
+            // Увеличиваем счетчик неудачных попыток
+            refreshAttempts++;
+
+            // Если несколько попыток подряд неудачны, считаем ошибку постоянной
+            if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+                System.out.println("Multiple refresh attempts failed due to unexpected errors. Please login again.");
+                clearTokens();
+            }
+        }
+    }
+
+    // Обновляем метод performLogin, чтобы сбрасывать счетчик при успешном входе
     private void performLogin() {
         System.out.print("Enter username: ");
         String username = this.scanner.nextLine();
@@ -114,8 +225,7 @@ public class JwtClientDemoApplication {
 
         System.out.println("Attempting to log in...");
         Optional<String> loginResponse = httpClientService.performBasicAuthLogin(
-                URI.create(serverConfig.getFullLoginUrl()
-                ), username, password
+                URI.create(serverConfig.getFullLoginUrl()), username, password
         );
 
         if (loginResponse.isPresent()) {
@@ -124,6 +234,7 @@ public class JwtClientDemoApplication {
                 Tokens tokens = tokensOpt.get();
                 this.currentAccessToken = tokens.accessToken();
                 this.currentRefreshToken = tokens.refreshToken();
+                this.refreshAttempts = 0; // Сбрасываем счетчик при успешном входе
 
                 System.out.println("Login successful!");
                 System.out.println("Access Token received.");
@@ -141,61 +252,9 @@ public class JwtClientDemoApplication {
         }
     }
 
-    private void accessProtectedResource() {
-        System.out.println("Accessing protected resource...");
-        Optional<String> resourceResponse = httpClientService.getWithBearerToken(
-                URI.create(serverConfig.getFullProtectedResourceUrl()), currentAccessToken);
 
-        resourceResponse.ifPresentOrElse(
-                response -> {
-                    System.out.println("Successfully accessed protected resource!");
-                    System.out.println("Response: " + response);
-                },
-                () -> {
-                    System.out.println("Failed to access protected resource. Access token might be invalid or expired.");
-                }
-        );
-    }
-
-    private void refreshAccessToken() {
-        System.out.println("Refreshing Access Token...");
-        // Клиент просто отправляет Refresh Token на сервер
-        Optional<String> refreshResponse = httpClientService.postWithBearerToken(
-                URI.create(serverConfig.getFullRefreshUrl()), "{}", currentRefreshToken);
-
-        if (refreshResponse.isPresent()) {
-            // Извлекаем новый Access Token из ответа сервера
-            Optional<Tokens> newTokensOpt = jwtTokenHandler.extractTokensFromResponse(refreshResponse.get());
-            if (newTokensOpt.isPresent()) {
-                this.currentAccessToken = newTokensOpt.get().accessToken();
-                // Сервер *может* вернуть новый Refresh Token
-                if (newTokensOpt.get().refreshToken() != null) {
-                    this.currentRefreshToken = newTokensOpt.get().refreshToken();
-                    System.out.println("Access AND Refresh Tokens refreshed successfully!");
-                } else {
-                    System.out.println("Access Token refreshed successfully!");
-                }
-
-                // Test access with new token
-                System.out.println("Testing access with the new token...");
-                Optional<String> testResponse = httpClientService.getWithBearerToken(
-                        URI.create(serverConfig.getFullProtectedResourceUrl()), currentAccessToken);
-                if (testResponse.isPresent()) {
-                    System.out.println("Test successful with new token!");
-                } else {
-                    System.out.println("Test failed with new token. Server rejected it.");
-                }
-
-            } else {
-                System.out.println("Failed to parse new tokens from refresh response.");
-                this.currentAccessToken = null;
-                this.currentRefreshToken = null;
-            }
-        } else {
-            System.out.println("Failed to refresh Access Token. Refresh request failed.");
-            this.currentAccessToken = null;
-            this.currentRefreshToken = null;
-            System.out.println("Cleared local token storage due to refresh failure.");
-        }
+    private boolean isTokenValid(String token) {
+        // TODO добавить проверку срока действия токена
+        return token != null && !token.isEmpty();
     }
 }
