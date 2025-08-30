@@ -20,9 +20,9 @@ import java.util.function.Function;
 @Builder
 public class JwtAuthenticationConfigurer
         extends AbstractHttpConfigurer<JwtAuthenticationConfigurer, HttpSecurity> {
-    private Function<Token, String> refreshTokenStringSerializer = Object::toString;
+    private Function<Token, String> refreshTokenStringSerializer;
 
-    private Function<Token, String> accessTokenStringSerializer = Object::toString;
+    private Function<Token, String> accessTokenStringSerializer;
 
     private Function<String, Token> accessTokenStringDeserializer;
 
@@ -31,7 +31,7 @@ public class JwtAuthenticationConfigurer
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public void init(HttpSecurity builder) throws Exception {
+    public void init(HttpSecurity builder) {
         var csrfConfigurer = builder.getConfigurer(CsrfConfigurer.class);
         if (csrfConfigurer != null) {
             csrfConfigurer.ignoringRequestMatchers(new AntPathRequestMatcher("/jwt/tokens", "POST"));
@@ -39,7 +39,7 @@ public class JwtAuthenticationConfigurer
     }
 
     @Override
-    public void configure(HttpSecurity builder) throws Exception {
+    public void configure(HttpSecurity builder) {
         var requestJwtTokensFilter = new RequestJwtTokensFilter();
         requestJwtTokensFilter.setAccessTokenStringSerializer(this.accessTokenStringSerializer);
         requestJwtTokensFilter.setRefreshTokenStringSerializer(this.refreshTokenStringSerializer);

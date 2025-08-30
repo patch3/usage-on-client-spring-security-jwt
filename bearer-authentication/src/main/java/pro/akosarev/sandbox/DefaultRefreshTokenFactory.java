@@ -3,6 +3,7 @@ package pro.akosarev.sandbox;
 import lombok.Setter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;

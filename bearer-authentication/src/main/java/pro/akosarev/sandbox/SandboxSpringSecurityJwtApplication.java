@@ -78,8 +78,11 @@ public class SandboxSpringSecurityJwtApplication {
                         .authorities(
                                 jdbcTemplate.query("select c_authority from t_user_authority where id_user = ?",
                                         (rs1, i1) ->
-                                                new SimpleGrantedAuthority(rs1.getString("c_authority")),
-                                        rs.getInt("id")))
-                        .build(), username).stream().findFirst().orElse(null);
+                                                new SimpleGrantedAuthority(
+                                                        rs1.getString("c_authority")),
+                                        rs.getInt("id")
+                                )
+                        ).build(),
+                username).stream().findFirst().orElse(null);
     }
 }
