@@ -35,35 +35,5 @@ public class JwtTokenHandler {
         }
     }
 
-
-    /**
-     * Refreshes the access token by calling the server's refresh endpoint.
-     * Assumes the endpoint expects the refresh token in the Authorization: Bearer header
-     * and returns a new access token (and optionally a new refresh token) in the response body.
-     */
-    public Optional<String> refreshAccessToken(HttpClientService httpClientService, String refreshEndpointUrl, String refreshTokenString) {
-        if (refreshTokenString == null || refreshTokenString.isEmpty()) {
-            log.warn("No refresh token provided for refresh.");
-            return Optional.empty();
-        }
-
-        try {
-            URI refreshUri = new URI(refreshEndpointUrl);
-            // The server might expect the refresh token in the body or header.
-            // Based on common patterns and your server setup, let's try header first.
-            // If that fails, you might need to adjust this part.
-            Optional<String> refreshResponse = httpClientService.postWithBearerToken(refreshUri, "{}", refreshTokenString); // Empty JSON body as placeholder
-
-            if (refreshResponse.isPresent()) {
-                // Parse the response to get the new access token
-                return extractTokensFromResponse(refreshResponse.get()).map(Tokens::accessToken);
-            } else {
-                log.warn("Refresh token request failed or returned empty response.");
-                return Optional.empty();
-            }
-        } catch (URISyntaxException e) {
-            log.error("Invalid refresh endpoint URI: {}", refreshEndpointUrl, e);
-            return Optional.empty();
-        }
-    }
+    
 }

@@ -48,11 +48,19 @@ public class ConfigLoader {
         return properties.getProperty(key, defaultValue);
     }
 
+    public int getIntProperty(String key) {
+        return Integer.parseInt(properties.getProperty(key));
+    }
+
     public int getIntProperty(String key, int defaultValue) {
         return Integer.parseInt(properties.getProperty(key, String.valueOf(defaultValue)));
     }
 
     public boolean getBooleanProperty(String key, boolean defaultValue) {
         return Boolean.parseBoolean(properties.getProperty(key, String.valueOf(defaultValue)));
+    }
+
+    public boolean getBooleanProperty(String key) {
+        return Boolean.parseBoolean(properties.getProperty(key));
     }
 }

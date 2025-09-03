@@ -98,27 +98,4 @@ public class HttpClientService {
             return Optional.empty();
         }
     }
-
-    // В HttpClientService добавляем метод для получения статуса
-    public Optional<HttpResponse<String>> performRequestWithStatus(HttpRequest request) {
-        try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return Optional.of(response);
-        } catch (Exception e) {
-            log.error("Exception occurred during request to {}", request.uri(), e);
-            return Optional.empty();
-        }
-    }
-
-    // И обновляем метод postWithBearerToken:
-    public Optional<HttpResponse<String>> postWithBearerTokenWithStatus(URI uri, String body, String token) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(uri)
-                .header("Authorization", "Bearer " + token)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        return performRequestWithStatus(request);
-    }
 }

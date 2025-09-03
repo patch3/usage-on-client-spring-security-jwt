@@ -12,8 +12,8 @@ create table t_user_authority
     c_authority varchar not null
 );
 
-create table t_deactivated_token
+/*create table t_deactivated_token
 (
     id           uuid primary key,
     c_keep_until timestamp not null check ( c_keep_until > now() )
-);
+);*/

@@ -216,7 +216,6 @@ public class JwtClientDemoApplication {
         }
     }
 
-    // Обновляем метод performLogin, чтобы сбрасывать счетчик при успешном входе
     private void performLogin() {
         System.out.print("Enter username: ");
         String username = this.scanner.nextLine();

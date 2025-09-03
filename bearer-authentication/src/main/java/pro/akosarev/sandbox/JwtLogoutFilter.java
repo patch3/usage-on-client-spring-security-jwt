@@ -28,9 +28,7 @@ public class JwtLogoutFilter extends OncePerRequestFilter {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public JwtLogoutFilter(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    public JwtLogoutFilter(JdbcTemplate jdbcTemplate) { this.jdbcTemplate = jdbcTemplate; }
 
 
     @Override
@@ -45,8 +43,8 @@ public class JwtLogoutFilter extends OncePerRequestFilter {
                         context.getAuthentication().getPrincipal() instanceof TokenUser user &&
                         context.getAuthentication().getAuthorities()
                                 .contains(new SimpleGrantedAuthority("JWT_LOGOUT"))) {
-                    this.jdbcTemplate.update("insert into t_deactivated_token (id, c_keep_until) values (?, ?)",
-                            user.getToken().id(), Date.from(user.getToken().expiresAt()));
+                    //this.jdbcTemplate.update("insert into t_deactivated_token (id, c_keep_until) values (?, ?)",
+                    //        user.getToken().id(), Date.from(user.getToken().expiresAt()));
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     return;
                 }
